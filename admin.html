@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin - War Legend</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f5f7fa;margin:0;color:#111}
+    .topbar{background:#444;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center}
+    .wrap{max-width:1100px;margin:20px auto;padding:12px}
+    h1{color:#ffb74d;margin:8px 0}
+    nav.tabs{display:flex;gap:8px;flex-wrap:wrap}
+    nav.tabs button{background:#222;color:#fff;padding:8px 12px;border:0;border-radius:8px;cursor:pointer}
+    section.card{display:none;background:#fff;padding:16px;border-radius:8px;margin-top:12px}
+    section.card.active{display:block}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{border:1px solid #eee;padding:8px;text-align:center}
+    input,select,textarea{padding:8px;border:1px solid #ddd;border-radius:6px;width:100%;box-sizing:border-box}
+    .grid-3{display:grid;grid-template-columns:1fr 120px 120px;gap:8px}
+    .muted{color:#666;font-size:13px}
+    .row{display:flex;gap:8px;align-items:center}
+    .small{padding:6px 8px;border-radius:6px;background:#eee;border:0;cursor:pointer}
+    .danger{background:#e74c3c;color:#fff}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div><a href="shop.html" style="color:#fff;text-decoration:none">← Về Shop</a></div>
+    <div id="adminInfo" class="muted"></div>
+  </div>
+
+  <div class="wrap">
+    <h1>⚙️ Admin - War Legend</h1>
+
+    <nav class="tabs" aria-label="Admin tabs">
+      <button onclick="openTab('accounts')">Tài khoản</button>
+      <button onclick="openTab('services')">Dịch vụ</button>
+      <button onclick="openTab('orders')">Đơn hàng</button>
+      <button onclick="openTab('lottery')">Vòng quay (Tickets)</button>
+      <button onclick="openTab('prizes')">Prizes (Quản lý)</button>
+      <button onclick="openTab('news')">Tin tức</button>
+    </nav>
+
+    <!-- ACCOUNTS -->
+    <section id="accounts" class="card">
+      <h3>Quản lý tài khoản</h3>
+      <table id="usersTable">
+        <thead><tr><th>#</th><th>Tên (email)</th><th>Mật khẩu</th><th>Số dư</th><th>Quyền</th><th>Hành động</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <div style="margin-top:10px">
+        <div class="grid-3">
+          <input id="newUserName" placeholder="Tên (email)">
+          <input id="newUserPass" placeholder="Mật khẩu">
+          <input id="newUserBalance" type="number" placeholder="Số dư">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+          <select id="newUserRole" style="width:160px">
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+            <option value="owner">owner</option>
+          </select>
+          <button onclick="addUser()">Thêm</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section id="services" class="card">
+      <h3>Quản lý dịch vụ</h3>
+      <div id="servicesList" class="muted"></div>
+      <div style="margin-top:8px" class="grid-3">
+        <input id="svcName" placeholder="Tên dịch vụ">
+        <input id="svcPrice" type="number" placeholder="Giá">
+        <div><button onclick="addService()">Thêm</button></div>
+      </div>
+    </section>
+
+    <!-- ORDERS -->
+    <section id="orders" class="card">
+      <h3>Đơn hàng</h3>
+      <table id="ordersTable">
+        <thead><tr><th>#</th><th>Game</th><th>Dịch vụ</th><th>Giá</th><th>Tài khoản</th><th>Ghi chú</th><th>Thời gian</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- LOTTERY - Tickets -->
+    <section id="lottery" class="card">
+      <h3>Vòng quay - Quản lý vé (Tickets)</h3>
+      <table id="ticketsTable">
+        <thead><tr><th>#</th><th>Tên</th><th>Số vé</th><th>Hành động</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <div style="margin-top:8px" class="row">
+        <input id="ticketUser" placeholder="Tên người nhận vé">
+        <input id="ticketCount" type="number" value="1" style="width:90px">
+        <button onclick="giveTickets()">Tặng</button>
+      </div>
+      <div class="muted" style="margin-top:8px">Tickets được lưu vào localStorage key "tickets".</div>
+    </section>
+
+    <!-- PRIZES -->
+    <section id="prizes" class="card">
+      <h3>Prizes - Quản lý phần thưởng</h3>
+      <div class="muted">Prizes lưu vào localStorage key "prizes". prizes.html sẽ đọc để hiển thị vòng quay. Tổng phần trăm nên ≤ 100%.</div>
+
+      <table id="prizesTable">
+        <thead><tr><th>#</th><th>Tên</th><th>Phần trăm (%)</th><th>Số lượng</th><th>Hành động</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <div style="margin-top:8px" class="grid-3">
+        <input id="prizeName" placeholder="Tên prize">
+        <input id="prizePercent" type="number" placeholder="Phần trăm" min="0" max="100">
+        <input id="prizeQty" type="number" placeholder="Số lượng" min="0" value="1">
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <button onclick="addPrize()">Thêm prize</button>
+        <button onclick="renderPrizes()">Làm mới</button>
+        <a href="prizes.html" target="_blank" class="small" style="margin-left:auto">Mở prizes.html</a>
+      </div>
+
+      <div id="prizeWarn" class="muted" style="margin-top:8px;color:#c0392b"></div>
+    </section>
+
+    <!-- NEWS -->
+    <section id="news" class="card">
+      <h3>Tin tức</h3>
+      <div id="newsList"></div>
+      <div style="margin-top:8px">
+        <input id="newsTitle" placeholder="Tiêu đề">
+        <input id="newsDate" type="date">
+        <textarea id="newsBody" placeholder="Nội dung"></textarea>
+        <div style="margin-top:8px"><button onclick="addNews()">Thêm</button></div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // Keys
+    const USER_KEY = 'users';
+    const SVC_KEY = 'services';
+    const ORDER_KEY = 'orders';
+    const TICKET_KEY = 'tickets';
+    const NEWS_KEY = 'news';
+    const PRIZE_KEY = 'prizes';
+
+    // helpers
+    const cur = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if(!cur || cur.username !== 'shopwarlergen@gmail.com'){
+      document.body.innerHTML = `
+        <div style="padding:40px;text-align:center">
+          <h2>Không có quyền truy cập</h2>
+          <p><a href="shop.html">Về shop</a></p>
+        </div>`;
+      throw 0;
+    }
+    document.getElementById('adminInfo').innerText = 'Admin: ' + (cur.name || cur.username);
+
+    function openTab(id){
+      document.querySelectorAll('section.card').forEach(s=>s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    openTab('accounts');
+
+    function getLS(k){ return JSON.parse(localStorage.getItem(k) || '[]'); }
+    function setLS(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+    function escapeHtml(s){
+      if(s===null||s===undefined) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ---------- Users ----------
+    function renderUsers(){
+      const users = getLS(USER_KEY);
+      const tbody = document.querySelector('#usersTable tbody');
+      tbody.innerHTML = users.map((u,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td><input id="u_name_${i}" value="${escapeHtml(u.username||'')}"></td>
+          <td><input id="u_pass_${i}" value="${escapeHtml(u.password||'')}"></td>
+          <td><input id="u_bal_${i}" type="number" value="${u.balance||0}"></td>
+          <td>
+            <select id="u_role_${i}">
+              <option ${u.role==='user'?'selected':''} value="user">user</option>
+              <option ${u.role==='admin'?'selected':''} value="admin">admin</option>
+              <option ${u.role==='owner'?'selected':''} value="owner">owner</option>
+            </select>
+          </td>
+          <td>
+            <button onclick="saveUser(${i})">Lưu</button>
+            <button onclick="deleteUser(${i})" class="danger">Xóa</button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan=6>Chưa có</td></tr>';
+    }
+
+    function addUser(){
+      let users = getLS(USER_KEY);
+      const n = document.getElementById('newUserName').value.trim();
+      const p = document.getElementById('newUserPass').value.trim();
+      const bal = parseInt(document.getElementById('newUserBalance').value) || 0;
+      const r = document.getElementById('newUserRole').value;
+      if(!n||!p){ alert('Nhập tên và mật khẩu'); return; }
+      users.push({ username:n, password:p, balance:bal, role:r });
+      setLS(USER_KEY, users);
+      renderUsers();
+      document.getElementById('newUserName').value=''; document.getElementById('newUserPass').value=''; document.getElementById('newUserBalance').value='';
+    }
+
+    function saveUser(i){
+      let users = getLS(USER_KEY);
+      users[i].username = document.getElementById('u_name_'+i).value.trim();
+      users[i].password = document.getElementById('u_pass_'+i).value;
+      users[i].balance = parseInt(document.getElementById('u_bal_'+i).value) || 0;
+      users[i].role = document.getElementById('u_role_'+i).value;
+      setLS(USER_KEY, users); renderUsers();
+    }
+
+    function deleteUser(i){
+      let users = getLS(USER_KEY);
+      if(confirm('Xóa người dùng?')){ users.splice(i,1); setLS(USER_KEY, users); renderUsers(); }
+    }
+
+    renderUsers();
+
+    // ---------- Services ----------
+    function renderServices(){
+      const list = getLS(SVC_KEY);
+      const wrap = document.getElementById('servicesList');
+      if(!list.length) wrap.innerHTML = '<div>Chưa có dịch vụ</div>';
+      else wrap.innerHTML = list.map((s,i)=>`
+        <div style="display:grid;grid-template-columns:1fr 120px 80px;gap:8px;margin:8px 0">
+          <input id="s_name_${i}" value="${escapeHtml(s.name||'')}">
+          <input id="s_price_${i}" type="number" value="${s.price||0}">
+          <div style="text-align:right">
+            <button onclick="saveService(${i})">Lưu</button>
+            <button onclick="delService(${i})">Xóa</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addService(){
+      let list = getLS(SVC_KEY);
+      const n = document.getElementById('svcName').value.trim();
+      const p = parseInt(document.getElementById('svcPrice').value) || 0;
+      if(!n || p<=0){ alert('Nhập tên và giá'); return; }
+      list.push({ name:n, price:p }); setLS(SVC_KEY, list); renderServices();
+      document.getElementById('svcName').value=''; document.getElementById('svcPrice').value='';
+    }
+
+    function saveService(i){
+      let list = getLS(SVC_KEY);
+      list[i].name = document.getElementById('s_name_'+i).value.trim();
+      list[i].price = parseInt(document.getElementById('s_price_'+i).value) || 0;
+      setLS(SVC_KEY, list); renderServices();
+    }
+
+    function delService(i){
+      let list = getLS(SVC_KEY);
+      if(confirm('Xóa dịch vụ?')){ list.splice(i,1); setLS(SVC_KEY, list); renderServices(); }
+    }
+
+    renderServices();
+
+    // ---------- Orders ----------
+    function renderOrders(){
+      const list = getLS(ORDER_KEY);
+      const tbody = document.querySelector('#ordersTable tbody');
+      if(!list.length) tbody.innerHTML = '<tr><td colspan=9>Chưa có đơn</td></tr>';
+      else tbody.innerHTML = list.map((o,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td>${escapeHtml(o.game||'')}</td>
+          <td>${escapeHtml(o.package||'')}</td>
+          <td>${(o.price||0).toLocaleString()} ₫</td>
+          <td>${escapeHtml(o.acc||'')}</td>
+          <td>${escapeHtml(o.note||'')}</td>
+          <td>${escapeHtml(o.time||'')}</td>
+          <td>
+            <select onchange="updateOrder(${i},this.value)">
+              <option ${o.status==='pending'?'selected':''} value="pending">Chờ</option>
+              <option ${o.status==='doing'?'selected':''} value="doing">Đang</option>
+              <option ${o.status==='done'?'selected':''} value="done">Xong</option>
+            </select>
+          </td>
+          <td><button onclick="delOrder(${i})">Xóa</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function updateOrder(i,s){ let list = getLS(ORDER_KEY); list[i].status = s; setLS(ORDER_KEY,list); renderOrders(); }
+    function delOrder(i){ let list = getLS(ORDER_KEY); if(confirm('Xóa đơn?')){ list.splice(i,1); setLS(ORDER_KEY,list); renderOrders(); } }
+
+    renderOrders();
+
+    // ---------- Tickets ----------
+    function renderTickets(){
+      const list = getLS(TICKET_KEY);
+      const tbody = document.querySelector('#ticketsTable tbody');
+      if(!list.length) tbody.innerHTML = '<tr><td colspan=4>Chưa có</td></tr>';
+      else tbody.innerHTML = list.map((t,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td>${escapeHtml(t.name)}</td>
+          <td><input id="tk_${i}" type="number" value="${t.tickets||0}" style="width:80px"></td>
+          <td>
+            <button onclick="saveTicket(${i})">Lưu</button>
+            <button onclick="removeTicket(${i})">Xóa</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function giveTickets(){
+      let name = document.getElementById('ticketUser').value.trim();
+      let cnt = parseInt(document.getElementById('ticketCount').value) || 0;
+      if(!name || cnt<=0){ alert('Nhập tên và số vé'); return; }
+      let list = getLS(TICKET_KEY); let idx = list.findIndex(x=>x.name===name);
+      if(idx>-1) list[idx].tickets = (list[idx].tickets||0) + cnt; else list.push({ name, tickets: cnt });
+      setLS(TICKET_KEY, list); renderTickets();
+      document.getElementById('ticketUser').value=''; document.getElementById('ticketCount').value='1';
+    }
+
+    function saveTicket(i){
+      let list = getLS(TICKET_KEY);
+      list[i].tickets = parseInt(document.getElementById('tk_'+i).value) || 0;
+      setLS(TICKET_KEY, list); renderTickets();
+    }
+
+    function removeTicket(i){
+      let list = getLS(TICKET_KEY);
+      if(confirm('Xóa vé?')){ list.splice(i,1); setLS(TICKET_KEY, list); renderTickets(); }
+    }
+
+    renderTickets();
+
+    // ---------- Prizes ----------
+    function getPrizes(){ return getLS(PRIZE_KEY); }
+    function setPrizes(v){ setLS(PRIZE_KEY, v); }
+
+    function renderPrizes(){
+      const list = getPrizes();
+      const tbody = document.querySelector('#prizesTable tbody');
+      if(!list.length) tbody.innerHTML = '<tr><td colspan=5>Chưa có prize</td></tr>';
+      else tbody.innerHTML = list.map((p,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td><input id="p_name_${i}" value="${escapeHtml(p.name||'')}"></td>
+          <td><input id="p_pct_${i}" type="number" value="${p.percent||0}" style="width:120px"></td>
+          <td><input id="p_qty_${i}" type="number" value="${p.qty||0}" style="width:100px"></td>
+          <td>
+            <button onclick="savePrize(${i})">Lưu</button>
+            <button onclick="delPrize(${i})" class="danger">Xóa</button>
+          </td>
+        </tr>
+      `).join('');
+
+      const total = list.reduce((s,p)=>s + (Number(p.percent)||0), 0);
+      const warn = document.getElementById('prizeWarn');
+      if(total > 100) warn.innerText = `Tổng phần trăm hiện tại là ${total}%. Vượt 100% — vui lòng điều chỉnh.`;
+      else warn.innerText = `Tổng phần trăm: ${total}%`;
+    }
+
+    function addPrize(){
+      const name = document.getElementById('prizeName').value.trim();
+      const percent = parseFloat(document.getElementById('prizePercent').value) || 0;
+      const qty = parseInt(document.getElementById('prizeQty').value) || 0;
+      if(!name){ alert('Nhập tên prize'); return; }
+      if(percent < 0 || percent > 100){ alert('Phần trăm không hợp lệ'); return; }
+      let list = getPrizes();
+      const total = list.reduce((s,p)=>s + (Number(p.percent)||0), 0) + percent;
+      if(total > 100 && !confirm(`Tổng phần trăm sẽ là ${total}%. Bạn vẫn muốn thêm?`)) return;
+      list.push({ name, percent, qty });
+      setPrizes(list);
+      document.getElementById('prizeName').value=''; document.getElementById('prizePercent').value=''; document.getElementById('prizeQty').value='1';
+      renderPrizes();
+    }
+
+    function savePrize(i){
+      let list = getPrizes();
+      list[i].name = document.getElementById('p_name_'+i).value.trim();
+      list[i].percent = parseFloat(document.getElementById('p_pct_'+i).value) || 0;
+      list[i].qty = parseInt(document.getElementById('p_qty_'+i).value) || 0;
+      const total = list.reduce((s,p)=>s + (Number(p.percent)||0), 0);
+      if(total > 100 && !confirm(`Tổng phần trăm sẽ là ${total}%. Tiếp tục lưu?`)) return;
+      setPrizes(list); renderPrizes();
+    }
+
+    function delPrize(i){
+      let list = getPrizes();
+      if(confirm('Xóa prize?')){ list.splice(i,1); setPrizes(list); renderPrizes(); }
+    }
+
+    renderPrizes();
+
+    // ---------- News ----------
+    function renderNews(){
+      const list = getLS(NEWS_KEY);
+      const wrap = document.getElementById('newsList');
+      if(!list.length) wrap.innerHTML = '<div>Chưa có</div>';
+      else wrap.innerHTML = list.map((n,i)=>`
+        <div style="border:1px solid #eee;padding:10px;margin-bottom:8px;display:grid;grid-template-columns:1fr 80px">
+          <div>
+            <b>${escapeHtml(n.title)}</b>
+            <div style="color:#666">${escapeHtml(n.date)}</div>
+            <div>${escapeHtml(n.body)}</div>
+          </div>
+          <div style="text-align:right"><button onclick="delNews(${i})">Xóa</button></div>
+        </div>
+      `).join('');
+    }
+
+    function addNews(){
+      const t = document.getElementById('newsTitle').value.trim();
+      const d = document.getElementById('newsDate').value || new Date().toLocaleDateString();
+      const b = document.getElementById('newsBody').value.trim();
+      if(!t||!b){ alert('Nhập tiêu đề và nội dung'); return; }
+      let list = getLS(NEWS_KEY); list.unshift({ title:t, date:d, body:b }); setLS(NEWS_KEY,list); renderNews();
+      document.getElementById('newsTitle').value=''; document.getElementById('newsDate').value=''; document.getElementById('newsBody').value='';
+    }
+
+    function delNews(i){ let list = getLS(NEWS_KEY); if(confirm('Xóa?')){ list.splice(i,1); setLS(NEWS_KEY,list); renderNews(); } }
+
+    renderNews();
+
+    // init done
+  </script>
+</body>
+</html>

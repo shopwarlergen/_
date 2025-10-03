@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Vòng quay - War Legend</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+/* top bar */
+.container{max-width:960px;margin:0 auto;padding:0 12px}
+.topbar{background:#444;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;justify-content:flex-start}
+.topbar a{color:#fff;text-decoration:none;font-weight:700;margin-right:16px}
+
+/* page */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+    color: #111;
+    text-align: center;
+    padding: 0 12px 40px;
+}
+#wheel-container {
+    position: relative;
+    display: inline-block;
+    margin: 28px auto;
+}
+#wheel {
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    border: 8px solid #333;
+    transition: transform 5s cubic-bezier(.2,.8,.2,1);
+    background: transparent;
+}
+.segment {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 50%;
+    left: 50%;
+    transform-origin: 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    box-sizing: border-box;
+    padding: 4px;
+    text-align: center;
+    user-select: none;
+}
+#arrow {
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 36px solid red; /* nhọn hướng vào vòng */
+    position: absolute;
+    top: -36px; /* dính sát viền vòng */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+}
+#spin {
+    padding: 10px 18px;
+    background: #28a745;
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 12px;
+}
+#spin:disabled { background:#aaa; cursor:not-allowed; }
+#info{margin-top:12px;font-size:16px}
+@media(max-width:520px){ #wheel{width:300px;height:300px} }
+</style>
+</head>
+<body>
+<div class="container topbar">
+  <a href="shop.html">← Về Shop</a>
+  <div style="font-weight:800">War Legend</div>
+</div>
+
+<h2 style="margin-top:18px">🎁 Vòng quay may mắn</h2>
+
+<div id="wheel-container">
+  <div id="arrow" aria-hidden="true"></div>
+  <div id="wheel" role="img" aria-label="Vòng quay"></div>
+</div>
+
+<p id="info"></p>
+<button id="spin">Quay</button>
+
+<script>
+// ===== LocalStorage helpers =====
+function getLS(k){ try{ return JSON.parse(localStorage.getItem(k) || '[]'); }catch(e){return [];} }
+function setLS(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+// check login
+const cur = JSON.parse(localStorage.getItem('currentUser') || 'null');
+if(!cur){
+  document.body.innerHTML = "<div style='padding:40px;text-align:center'><h2>Vui lòng đăng nhập để chơi vòng quay!</h2><p><a href='shop.html'>Về shop</a></p></div>";
+  throw 0;
+}
+
+// tickets
+function loadTickets(){ const t = getLS('tickets'); const name = cur.name || cur.username; const u = t.find(x=>x.name===name); return u ? Number(u.tickets)||0 : 0; }
+function updateTicket(n){ const name = cur.name || cur.username; const t = getLS('tickets'); const i = t.findIndex(x=>x.name===name); if(i>-1) t[i].tickets = n; else t.push({name, tickets:n}); setLS('tickets', t); }
+
+// prizes from admin (raw)
+function loadPrizesFromStorage(){ return getLS('prizes') || []; }
+
+// normalize and build runtime prize list (use percent, exclude qty===0)
+function buildPrizes(){
+  const raw = loadPrizesFromStorage();
+  const list = raw.map(r => ({
+    name: r.name || r.label || '',
+    percent: Number(r.percent) || 0,
+    qty: (r.qty===undefined && r.quantity!==undefined) ? Number(r.quantity)||0 : (r.qty===undefined ? null : Number(r.qty)),
+    value: (r.value!==undefined) ? Number(r.value) : (function(){
+      const lbl = (r.name||r.label||'').toString();
+      const m = lbl.match(/([\d.,]+)/);
+      if(!m) return 0;
+      const num = m[1].replace(/[.,]/g,'');
+      return /k$/i.test(lbl) ? Number(num)*1000 : (Number(num)||0);
+    })()
+  })).filter(p => p.percent > 0 && p.qty !== 0);
+
+  const totalPct = list.reduce((s,p)=>s + (p.percent||0), 0);
+  if(totalPct < 100){
+    list.push({ name: 'Không trúng', percent: 100 - totalPct, qty: null, value: 0 });
+  }
+  if(list.length === 0) list.push({ name: 'Không trúng', percent: 100, qty: null, value: 0 });
+
+  // compute chance normalized
+  const sum = list.reduce((s,p)=>s + (p.percent||0), 0) || 1;
+  return list.map(p => ({ ...p, chance: (p.percent||0) / sum }));
+}
+
+// render wheel segments (labels + qty only, no percent)
+const wheel = document.getElementById('wheel');
+function renderWheel(){
+  const prizes = buildPrizes();
+  wheel.innerHTML = '';
+  const n = Math.max(prizes.length,1);
+  const seg = 360 / n;
+  prizes.forEach((p,i)=>{
+    const d = document.createElement('div');
+    d.className = 'segment';
+    d.style.transform = `rotate(${i*seg}deg) skewY(${90-seg}deg)`;
+    d.style.background = (i%2) ? '#ffd966' : '#fff2cc';
+    const qtyText = (p.qty>0) ? ` (${p.qty} left)` : (p.qty===0 ? ' (hết hàng)' : '');
+    d.innerHTML = `<div style="transform:skewY(-${90-seg}deg) rotate(${seg/2}deg);font-size:14px">${escapeHtml(p.name)}${qtyText}</div>`;
+    wheel.appendChild(d);
+  });
+}
+function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+renderWheel();
+
+// weighted pick
+function pickByChance(list){
+  const r = Math.random();
+  let s = 0;
+  for(const p of list){ s += p.chance || 0; if(r < s) return p; }
+  return list[list.length-1];
+}
+
+// apply prize: decrement qty in admin storage and add balance if value>0
+function applyPrize(pr){
+  if(!pr) return;
+  const raw = loadPrizesFromStorage();
+  for(let i=0;i<raw.length;i++){
+    const key = raw[i].name || raw[i].label || '';
+    if(String(key) === String(pr.name)){
+      const curQty = Number(raw[i].qty) || 0;
+      if(curQty > 0){
+        raw[i].qty = curQty - 1;
+        setLS('prizes', raw);
+      }
+      break;
+    }
+  }
+  // give money if any
+  const val = Number(pr.value) || 0;
+  if(val > 0){
+    const users = getLS('users') || [];
+    const uname = cur.name || cur.username;
+    const idx = users.findIndex(u => (u.name||u.username) === uname);
+    if(idx > -1){
+      users[idx].balance = (users[idx].balance||0) + val;
+      setLS('users', users);
+      cur.balance = users[idx].balance;
+      localStorage.setItem('currentUser', JSON.stringify(cur));
+    }
+  }
+}
+
+// spin logic (synchronized with admin percents & qty)
+let spinning = false;
+const infoEl = document.getElementById('info');
+function updateInfo(){ infoEl.innerText = `Vé hiện có: ${loadTickets()}`; document.getElementById('spin').disabled = loadTickets()<=0; }
+updateInfo();
+
+document.getElementById('spin').addEventListener('click', function(){
+  if(spinning) return;
+  let tickets = loadTickets();
+  if(tickets <= 0){ alert('Bạn không có vé.'); return; }
+  spinning = true;
+  tickets--; updateTicket(tickets); updateInfo();
+
+  const runtime = buildPrizes();
+  // pick according to chance
+  const chosen = pickByChance(runtime);
+  // find index in runtime for rotation
+  const idx = runtime.findIndex(p => String(p.name) === String(chosen.name));
+  const n = runtime.length;
+  const seg = 360 / n;
+  // rotate so chosen segment center aligns with arrow at top: use multiple turns for effect
+  const stop = (360*6) + (idx * seg + seg/2);
+  // rotate negative so top arrow hits segment (wheel visual orientation)
+  wheel.style.transition = 'transform 5s cubic-bezier(.2,.8,.2,1)';
+  wheel.style.transform = `rotate(-${stop}deg)`;
+
+  setTimeout(() => {
+    // handle out-of-stock case
+    if(chosen.qty === 0){
+      alert('😢 Rất tiếc! Phần thưởng đã hết hàng.');
+    } else {
+      if(Number(chosen.value) > 0) alert('🎉 Bạn trúng: ' + chosen.name);
+      else alert(chosen.name === 'Không trúng' ? '😢 Rất tiếc! Không trúng.' : ('🎉 Bạn trúng: ' + chosen.name));
+      applyPrize(chosen);
+    }
+
+    // reset and re-render to reflect updated qty/percent
+    setTimeout(()=>{
+      wheel.style.transition = 'none';
+      wheel.style.transform = 'rotate(0deg)';
+      renderWheel();
+      updateInfo();
+      spinning = false;
+    }, 80);
+  }, 5200);
+});
+</script>
+</body>
+</html>

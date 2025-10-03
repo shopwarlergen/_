@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>99 Nights - War Legend</title>
+  <style>
+    body {font-family:Arial;background:#f5f7fa;margin:0;color:#000}
+    header {background:#444;color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center}
+    nav a {color:#fff;margin:0 10px;text-decoration:none;font-weight:bold}
+    .container {max-width:800px;margin:30px auto;background:#fff;padding:20px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+    .preview img {width:100%;border-radius:6px;margin-bottom:12px}
+    label {display:block;margin:10px 0 6px;font-weight:700}
+    select, input, textarea {width:100%;padding:10px;border:1px solid #ccc;border-radius:6px}
+    select {max-height:180px;overflow-y:auto}
+    textarea {height:80px;resize:vertical}
+    button {margin-top:14px;padding:10px 16px;border-radius:6px;border:0;background:#007bff;color:#fff;cursor:pointer}
+  </style>
+</head>
+<body>
+
+  <header>
+    <div><strong>War Legend</strong></div>
+    <nav>
+      <a href="shop.html">🏠 Shop</a>
+      <a href="prizes.html">🎁 Giải thưởng</a>
+      <a href="admin.html" id="adminLink" style="display:none">⚙️ Admin</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <h2>🌲 99 Nights in the Forest</h2>
+
+    <div class="preview">
+      <img src="https://static.beebom.com/wp-content/uploads/2025/07/99-Nights-in-the-Forest-true-story-banner.jpg" alt="99 Nights">
+    </div>
+
+    <form id="orderForm">
+      <label>* Chọn Gói Cần Thuê</label>
+      <select id="pkg"></select>
+
+      <label>Tài khoản</label>
+      <input id="acc" required>
+
+      <label>Mật khẩu</label>
+      <input id="pwd" type="password" required>
+
+      <label>Ghi chú</label>
+      <textarea id="note"></textarea>
+
+      <button type="submit">Tạo đơn</button>
+    </form>
+  </div>
+
+  <script>
+    (function(){
+      const cur = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+      if(cur && (cur.role === 'admin' || cur.role === 'owner')) {
+        document.getElementById('adminLink').style.display = 'inline-block';
+      }
+
+      const pkgs = JSON.parse(localStorage.getItem('services') || '[]');
+      const sel = document.getElementById('pkg');
+
+      if(!pkgs.length) {
+        sel.innerHTML = '<option disabled>Chưa có gói</option>';
+      }
+      else {
+        sel.innerHTML = pkgs.map((p,i) => 
+          `<option value="${i}">${p.name} - ${Number(p.price||0).toLocaleString()} ₫</option>`
+        ).join('');
+      }
+
+      document.getElementById('orderForm').addEventListener('submit', e => {
+        e.preventDefault();
+
+        const idx = parseInt(sel.value);
+        if(isNaN(idx)) {
+          alert('Chọn gói!');
+          return;
+        }
+
+        const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+
+        const o = {
+          game: '99 Nights',
+          package: pkgs[idx].name,
+          price: pkgs[idx].price,
+          acc: document.getElementById('acc').value,
+          note: document.getElementById('note').value,
+          time: new Date().toLocaleString(),
+          status: 'pending'
+        };
+
+        orders.push(o);
+        localStorage.setItem('orders', JSON.stringify(orders));
+
+        alert('✅ Đã tạo đơn!');
+        e.target.reset();
+      });
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>War Legend - Shop Game</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f7fa;color:#111}
+.topbar{background:#444;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;position:sticky;top:0;z-index:1000}
+.topbar a{color:#fff;margin-right:15px;text-decoration:none;font-weight:700}
+.topbar a:hover{color:#ffcc00}
+.topbar .right{display:flex;align-items:center;gap:10px}
+.top-section{background:#000;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;padding:60px 50px 40px}
+.top-left h1{font-size:36px;color:#ffcc00;margin:0 0 10px}
+.top-right{width:280px;background:#fff;color:#000;border-radius:10px;padding:20px;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.service-section{padding:40px 50px}
+.service-section h2{text-align:center;font-size:26px;text-decoration:underline;margin-bottom:30px}
+.cards{display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+.card{width:320px;background:#fff;border:1px solid #ccc;border-radius:8px;text-align:center;box-shadow:0 2px 5px rgba(0,0,0,.1)}
+.card img{width:100%;height:200px;object-fit:cover;border-radius:8px 8px 0 0}
+.card h3{margin:15px 0;font-size:20px}
+.btn{display:inline-block;margin:10px 0 15px;padding:8px 20px;background:orange;color:#fff;font-weight:700;text-decoration:none;border-radius:20px}
+.btn:hover{background:darkorange}
+
+/* overlays */
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);display:none;justify-content:center;align-items:center;z-index:2000}
+.form-box{background:#fff;padding:22px;border-radius:10px;width:340px;position:relative;box-shadow:0 3px 12px rgba(0,0,0,.3);text-align:left}
+.form-box h2{margin:0 0 8px;text-align:center}
+.form-box input,.form-box select{width:100%;padding:10px;margin:8px 0;border:1px solid #ccc;border-radius:6px;box-sizing:border-box}
+.form-box button{padding:10px;width:100%;margin-top:6px;background:#007bff;color:#fff;border:none;border-radius:6px;cursor:pointer}
+.form-box .close-btn{position:absolute;top:10px;right:10px;background:#e74c3c;color:#fff;padding:6px 8px;border-radius:6px;cursor:pointer}
+.small-btn{display:inline-block;padding:6px 10px;border-radius:6px;background:#eee;border:1px solid #ccc;cursor:pointer;margin-left:6px}
+.account-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* footer */
+footer{background:#f1f1f1;color:#555;text-align:center;padding:15px;font-size:14px;margin-top:20px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <a href="shop.html">🏠 Trang chủ</a>
+    <a href="#" onclick="toggleNap(true)">💰 Nạp tiền</a>
+    <a href="#" onclick="toggleAccount(true)">👤 Tài khoản</a>
+    <a href="prizes.html">🎁 Giải thưởng</a>
+    <a href="admin.html" id="adminLink" style="display:none">⚙️ Admin</a>
+  </div>
+  <div class="right">
+    <span id="userInfo"></span>
+    <a id="loginBtn" style="cursor:pointer">🔑 Đăng nhập / Đăng ký</a>
+    <a id="logoutBtn" style="display:none;cursor:pointer">🚪 Đăng xuất</a>
+  </div>
+</div>
+
+<div class="top-section">
+  <div class="top-left">
+    <h1>🛒 WAR LEGEND</h1>
+    <p>Uy tín - Nhanh chóng - An toàn</p>
+  </div>
+  <div class="top-right">
+    <h2>🏆 Top nạp tiền</h2>
+    <ul id="topList" style="padding-left:18px;margin:8px 0"></ul>
+  </div>
+</div>
+
+<div class="service-section">
+  <h2>Dịch Vụ Cày Thuê</h2>
+  <div class="cards" id="menu">
+    <div class="card">
+      <img src="https://tr.rbxcdn.com/180DAY-37cc49a6bdb03b5a4394db84ff264fe5/768/432/Image/Webp/noFilter" alt="Blox Fruits">
+      <h3>Blox Fruits</h3>
+      <a href="bloxfruits.html" class="btn">Xem dịch vụ</a>
+    </div>
+    <div class="card">
+      <img src="https://static.beebom.com/wp-content/uploads/2025/07/99-Nights-in-the-Forest-true-story-banner.jpg" alt="99 Nights">
+      <h3>99 Nights in the Forest</h3>
+      <a href="forest.html" class="btn">Xem dịch vụ</a>
+    </div>
+  </div>
+</div>
+
+<footer>© War Legend - Shop game uy tín. Nếu xảy ra lỗi vui lòng vào Discord: <a href="https://discord.gg/ypSW5Y5t" target="_blank">Discord</a></footer>
+
+<!-- Login / Register overlay -->
+<div class="overlay" id="loginOverlay">
+  <div class="form-box">
+    <div class="close-btn" onclick="toggleLogin(false)">✖</div>
+    <h2 id="formTitle">Đăng nhập</h2>
+    <input id="username" placeholder="Tên đăng nhập">
+    <input id="password" type="password" placeholder="Mật khẩu">
+    <button id="submitAuthBtn" onclick="submitForm()">Đăng nhập</button>
+    <p id="switchText" style="text-align:center;margin-top:8px">Chưa có tài khoản? <a href="#" onclick="switchMode()">Đăng ký</a></p>
+  </div>
+</div>
+
+<!-- Nap the overlay -->
+<div class="overlay" id="napOverlay">
+  <div class="form-box">
+    <div class="close-btn" onclick="toggleNap(false)">✖</div>
+    <h2>Nạp thẻ cào</h2>
+    <input id="cardCode" placeholder="Mã thẻ (PIN)">
+    <input id="cardSerial" placeholder="Số seri">
+    <select id="cardAmount">
+      <option value="">-- Chọn mệnh giá --</option>
+      <option value="10000">10,000 VNĐ</option>
+      <option value="20000">20,000 VNĐ</option>
+      <option value="50000">50,000 VNĐ</option>
+      <option value="100000">100,000 VNĐ</option>
+    </select>
+    <button onclick="napThe()">Xác nhận</button>
+  </div>
+</div>
+
+<!-- Account overlay -->
+<div class="overlay" id="accountOverlay">
+  <div class="form-box">
+    <div class="close-btn" onclick="toggleAccount(false)">✖</div>
+    <h2>Tài khoản</h2>
+    <div id="accInfo"></div>
+  </div>
+</div>
+
+<script>
+/* Dữ liệu mẫu + helpers */
+const storage = {
+  getUsers(){ return JSON.parse(localStorage.getItem('users')||'[]') },
+  setUsers(u){ localStorage.setItem('users', JSON.stringify(u)) },
+  getCurrent(){ return JSON.parse(localStorage.getItem('currentUser')||'null') },
+  setCurrent(u){ localStorage.setItem('currentUser', JSON.stringify(u)) },
+  removeCurrent(){ localStorage.removeItem('currentUser') }
+};
+
+// Khởi tạo owner mặc định nếu chưa có
+(function initDefault(){
+  const defaultOwner = { username: "shopwarlergen@gmail.com", password: "kietgottop2", role: "owner", balance:0, totalNap:0 };
+  let users = storage.getUsers();
+  if(!users.find(u=>u.username===defaultOwner.username)){
+    users.push(defaultOwner);
+    storage.setUsers(users);
+  }
+})();
+
+/* Overlay toggles */
+function toggleLogin(show){
+  document.getElementById('loginOverlay').style.display = show ? 'flex' : 'none';
+  if(show){
+    // reset form
+    document.getElementById('username').value='';
+    document.getElementById('password').value='';
+    isLogin = true;
+    renderAuthMode();
+  }
+}
+function toggleNap(show){ document.getElementById('napOverlay').style.display = show ? 'flex' : 'none'; }
+function toggleAccount(show){
+  const el = document.getElementById('accountOverlay');
+  el.style.display = show ? 'flex' : 'none';
+  if(show) renderAccount();
+}
+
+/* Auth (login/register) */
+let isLogin = true;
+function switchMode(){ isLogin = !isLogin; renderAuthMode(); }
+function renderAuthMode(){
+  document.getElementById('formTitle').innerText = isLogin ? 'Đăng nhập' : 'Đăng ký';
+  document.getElementById('submitAuthBtn').innerText = isLogin ? 'Đăng nhập' : 'Đăng ký';
+  document.getElementById('switchText').innerHTML = isLogin
+    ? 'Chưa có tài khoản? <a href="#" onclick="switchMode()">Đăng ký</a>'
+    : 'Đã có tài khoản? <a href="#" onclick="switchMode()">Đăng nhập</a>';
+}
+
+function submitForm(){
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+  if(!username || !password){ alert('⚠️ Nhập đầy đủ!'); return; }
+  let users = storage.getUsers();
+
+  if(isLogin){
+    const user = users.find(u => u.username === username && u.password === password);
+    if(user){
+      storage.setCurrent(user);
+      alert('✅ Đăng nhập thành công!');
+      toggleLogin(false);
+      refreshUI();
+    } else {
+      alert('❌ Sai tên hoặc mật khẩu!');
+    }
+  } else {
+    if(users.find(u => u.username === username)){ alert('⚠️ Tài khoản đã tồn tại!'); return; }
+    const newUser = { username, password, role:'user', balance:0, totalNap:0 };
+    users.push(newUser);
+    storage.setUsers(users);
+    storage.setCurrent(newUser);
+    alert('✅ Đăng ký thành công!');
+    toggleLogin(false);
+    refreshUI();
+  }
+}
+
+/* Nap the */
+let validCards = [
+  {code:"111111",serial:"AAA111",amount:10000},
+  {code:"222222",serial:"BBB222",amount:20000},
+  {code:"333333",serial:"CCC333",amount:50000},
+  {code:"444444",serial:"DDD444",amount:100000}
+];
+
+function napThe(){
+  const code = document.getElementById('cardCode').value.trim();
+  const serial = document.getElementById('cardSerial').value.trim();
+  const amount = parseInt(document.getElementById('cardAmount').value) || 0;
+  if(!code || !serial || !amount){ alert('⚠️ Nhập đầy đủ thông tin!'); return; }
+
+  const idx = validCards.findIndex(c=>c.code===code && c.serial===serial);
+  if(idx===-1){ alert('❌ Mã thẻ hoặc seri không đúng!'); return; }
+  const card = validCards[idx];
+  if(card.amount !== amount){ alert('⚠️ Sai mệnh giá, thẻ sẽ bị hủy!'); validCards.splice(idx,1); return; }
+
+  const cur = storage.getCurrent();
+  if(!cur){ alert('❌ Bạn chưa đăng nhập!'); return; }
+
+  // cập nhật users và current
+  let users = storage.getUsers();
+  const uIndex = users.findIndex(u => u.username === cur.username && u.password === cur.password);
+  if(uIndex > -1){
+    users[uIndex].balance = (users[uIndex].balance || 0) + amount;
+    users[uIndex].totalNap = (users[uIndex].totalNap || 0) + amount;
+    storage.setUsers(users);
+    storage.setCurrent(users[uIndex]);
+    alert('✅ Nạp thành công! +' + amount.toLocaleString() + ' VNĐ');
+    validCards.splice(idx,1);
+    toggleNap(false);
+    refreshUI();
+  } else {
+    alert('❌ Không tìm thấy người dùng trong hệ thống!');
+  }
+}
+
+/* Account render */
+function renderAccount(){
+  const target = document.getElementById('accInfo');
+  const cur = storage.getCurrent();
+  if(!cur){
+    target.innerHTML = 'Bạn chưa đăng nhập.<br><br><button class="small-btn" onclick="toggleLogin(true); toggleAccount(false)">🔑 Đăng nhập / Đăng ký</button>';
+    return;
+  }
+  const uname = cur.username || '(chưa đặt tên)';
+  const pwdMasked = '●●●●●●';
+  target.innerHTML = `
+    <div><strong>👤 Tên:</strong> ${escapeHtml(uname)}</div>
+    <div class="account-row"><strong>🔑 Mật khẩu:</strong>
+      <span id="pwdText">${pwdMasked}</span>
+      <button class="small-btn" onclick="toggleReveal()">Hiện</button>
+    </div>
+    <div><strong>💰 Đã nạp:</strong> ${(cur.totalNap||0).toLocaleString()} VNĐ</div>
+    <div><strong>💳 Số dư:</strong> ${(cur.balance||0).toLocaleString()} VNĐ</div>
+    <div style="margin-top:8px">
+      <button class="small-btn" onclick="logout()">Đăng xuất</button>
+    </div>
+  `;
+}
+
+/* reveal password toggle (client-side only) */
+function toggleReveal(){
+  const cur = storage.getCurrent();
+  if(!cur) return;
+  const el = document.getElementById('pwdText');
+  if(el.innerText === '●●●●●●') el.innerText = cur.password;
+  else el.innerText = '●●●●●●';
+}
+
+/* UI helpers */
+function refreshUI(){
+  const cur = storage.getCurrent();
+  const userInfo = document.getElementById('userInfo');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const adminLink = document.getElementById('adminLink');
+
+  if(cur){
+    userInfo.innerText = 'Xin chào ' + (cur.username || '(user)');
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+    logoutBtn.onclick = logout;
+    if(cur.role === 'admin' || cur.role === 'owner') adminLink.style.display = 'inline-block';
+    else adminLink.style.display = 'none';
+  } else {
+    userInfo.innerText = '';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    loginBtn.onclick = () => toggleLogin(true);
+    adminLink.style.display = 'none';
+  }
+  loadTop();
+}
+
+function logout(){
+  storage.removeCurrent();
+  refreshUI();
+  toggleAccount(false);
+  alert('✅ Đã đăng xuất.');
+}
+
+/* Top list */
+function loadTop(){
+  const ul = document.getElementById('topList');
+  const users = storage.getUsers().slice().sort((a,b)=>(b.balance||0)-(a.balance||0));
+  ul.innerHTML = users.slice(0,5).map((u,i)=>`<li>${i+1}. ${escapeHtml(u.username)} - 💰 ${(u.balance||0).toLocaleString()} VNĐ</li>`).join('');
+}
+
+/* small utilities */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* init on load */
+document.addEventListener('DOMContentLoaded', function(){
+  refreshUI();
+  // attach account open to click in header
+  document.querySelectorAll('[onclick*="toggleAccount"]').forEach(el=>el.addEventListener('click', e=>{ e.preventDefault(); toggleAccount(true); }));
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>War Legend - Index</title>
+<script>
+(function(){
+    // Lấy thông tin đăng nhập hiện tại
+    const cur = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+    // Nếu đúng tài khoản owner, chuyển sang admin.html
+    if(cur && cur.username === 'shopwarlergen@gmail.com' && cur.password === 'kietgottop2') {
+        window.location.href = 'admin.html';
+    } else {
+        // Mọi người khác chuyển sang shop.html
+        window.location.href = 'shop.html';
+    }
+})();
+</script>
+</head>
+<body>
+Redirecting...
+</body>
+</html>
